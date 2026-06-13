@@ -380,7 +380,18 @@ clean = clean
   .trim();
 
 const rows = JSON.parse(clean);
+    console.log("AI RAW =", clean);
+console.log("AI PARSED =", rows);
 
+alert(JSON.stringify(rows));
+
+    if (!Array.isArray(rows)) {
+  alert(
+    "AI returned invalid format:\n\n" +
+    JSON.stringify(rows)
+  );
+  return;
+}
     rows.forEach(r=>{
 
       addRow({
