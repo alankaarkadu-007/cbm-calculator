@@ -140,7 +140,20 @@
         <button class="btn primary" id="addRowBtn">+ Add Next Serial</button>
         <button class="btn ghost" id="exportBtn">Export CSV</button>
         <button class="btn primary" id="waBtn">🟢 WhatsApp Share</button>
-        <button class="btn danger" id="clearBtn">Clear All</button>
+
+<button class="btn primary" id="aiBtn">
+📷 AI Import
+</button>
+
+<input
+  type="file"
+  id="aiFile"
+  accept="image/*"
+  capture="environment"
+  hidden
+>
+
+<button class="btn danger" id="clearBtn">Clear All</button>
       </div>
 
       <div class="hr"></div>
@@ -197,6 +210,8 @@
     const clearBtn = document.getElementById('clearBtn');
     const exportBtn = document.getElementById('exportBtn');
     const waBtn = document.getElementById('waBtn');
+    const aiBtn = document.getElementById('aiBtn');
+    const aiFile = document.getElementById('aiFile');
     const totalPkgsEl = document.getElementById('totalPkgs');
     const totalCbmEl = document.getElementById('totalCbm');
     const totalSerialsEl = document.getElementById('totalSerials');
@@ -325,8 +340,93 @@
       );
     }
 
+    async function aiImportImage(file){
+
+  aiBtn.disabled = true;
+  aiBtn.textContent = "🤖 Reading...";
+
+  try {
+
+    const base64 = await new Promise((resolve)=>{
+
+      const reader = new FileReader();
+
+      reader.onload = ()=>resolve(reader.result);
+
+      reader.readAsDataURL(file);
+
+    });
+
+    const response = await fetch(
+      "https://cbm-ai-import.alankaar-kadu.workers.dev",
+      {
+        method:"POST",
+        headers:{
+          "Content-Type":"application/json"
+        },
+        body: JSON.stringify({
+          image: base64
+        })
+      }
+    );
+
+    const text = await response.text();
+
+    const rows = JSON.parse(text);
+
+    rows.forEach(r=>{
+
+      addRow({
+        l:r.l,
+        w:r.w,
+        h:r.h,
+        q:r.q
+      });
+
+    });
+
+    saveState();
+
+    alert(
+      rows.length +
+      " rows imported successfully."
+    );
+
+  } catch(err){
+
+    alert(
+      "AI Import Failed\n\n" +
+      err.message
+    );
+
+    console.error(err);
+
+  }
+
+  aiBtn.disabled = false;
+  aiBtn.textContent = "📷 AI Import";
+}
+
     // Actions
     waBtn.addEventListener('click', shareWhatsApp);
+    aiBtn.addEventListener(
+  'click',
+  ()=>aiFile.click()
+);
+
+aiFile.addEventListener(
+  'change',
+  (e)=>{
+
+    const file =
+      e.target.files[0];
+
+    if(!file) return;
+
+    aiImportImage(file);
+
+  }
+);
     addRowBtn.addEventListener('click', ()=>{ addRow(); saveState(); });
     clearBtn.addEventListener('click', ()=>{ rowsEl.innerHTML=''; addRow(); updateTotals(); if(navigator.vibrate) navigator.vibrate([20,20]); saveState(); });
     exportBtn.addEventListener('click', exportCSV);
