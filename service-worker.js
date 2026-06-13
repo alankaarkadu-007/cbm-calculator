@@ -1,4 +1,4 @@
-const CACHE_NAME = "cbm-calculator-v1";
+const CACHE_NAME = "cbm-calculator-v2";
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
