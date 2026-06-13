@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CBM Calculator</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #111827;
+      --muted: #94a3b8;
+      --text: #e5e7eb;
+      --accent: #22c55e;
+      --accent-2: #60a5fa;
+      --danger: #ef4444;
+      --ring: #334155;
+      --border: #1f2937;
+      --input: #0b1224;
+      --shadow: rgba(0,0,0,.45);
+    }
+    [data-theme="light"] {
+      --bg: #f5f7fb; --card: #ffffff; --muted: #6b7280; --text: #111827;
+      --accent: #16a34a; --accent-2: #2563eb; --danger: #ef4444; --ring: #cbd5e1;
+      --border: #e5e7eb; --input: #f3f4f6; --shadow: rgba(0,0,0,.08);
+    }
+    [data-theme="ocean"] {
+      --bg: #031526; --card: #0b2239; --muted: #90b4ce; --text: #e2f3ff;
+      --accent: #2dd4bf; --accent-2: #38bdf8; --danger: #fb7185; --ring: #0ea5e9;
+      --border: #133759; --input: #0a223a; --shadow: rgba(3,21,38,.5);
+    }
+    [data-theme="forest"] {
+      --bg: #0d1712; --card: #10201a; --muted: #9fb7a8; --text: #ecfdf5;
+      --accent: #10b981; --accent-2: #84cc16; --danger: #ef4444; --ring: #14532d;
+      --border: #1b2b24; --input: #0e1c17; --shadow: rgba(13,23,18,.5);
+    }
+    [data-theme="amoled"] {
+      --bg: #000; --card: #0a0a0a; --muted: #a3a3a3; --text: #fafafa;
+      --accent: #22c55e; --accent-2: #3b82f6; --danger: #ef4444; --ring: #1f2937;
+      --border: #262626; --input: #0a0a0a; --shadow: rgba(0,0,0,.6);
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      background: linear-gradient(180deg, var(--bg), rgba(0,0,0,.08) 40%, var(--bg));
+      color: var(--text);
+    }
+    .container { max-width: 880px; margin: 0 auto; padding: 16px; }
+    .card {
+      background: color-mix(in oklab, var(--card) 85%, transparent);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 14px;
+      box-shadow: 0 10px 30px var(--shadow);
+    }
+    .topbar {
+      display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+      margin-bottom: 6px;
+    }
+    h1 { font-size: 1.25rem; margin: 0; font-weight: 800; letter-spacing: 0.2px; display: flex; gap: 8px; align-items: center; }
+    .byline { color: var(--muted); font-size: 0.86rem; }
+    .sub { color: var(--muted); font-size: 0.92rem; margin-bottom: 8px; line-height: 1.4; }
+    .controls { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 12px; }
+    select, .btn {
+      padding: 8px 10px; border-radius: 10px; border: 1px solid var(--border); background: var(--input); color: var(--text); font-weight: 600; outline: none;
+    }
+    .btn.primary {
+      background: linear-gradient(135deg, var(--accent), color-mix(in oklab, var(--accent-2) 60%, var(--accent)));
+      border: none; color: #052e16; box-shadow: 0 6px 16px rgba(0,0,0,.25);
+    }
+    .btn.ghost { background: var(--input); }
+    .btn.danger { background: #1f2937; color: #fecaca; border: 1px solid #7f1d1d; }
+    .btn:focus, select:focus { box-shadow: 0 0 0 4px color-mix(in oklab, var(--accent-2) 25%, transparent); }
+    .btn:active { transform: translateY(1px); }
+    .row {
+      display: grid;
+      grid-template-columns: 42px 72px 72px 72px 70px 90px 34px;
+      gap: 10px; align-items: center; padding: 10px; border-radius: 12px;
+      border: 1px solid var(--border); background: color-mix(in oklab, var(--bg) 35%, transparent);
+    }
+    .row + .row { margin-top: 10px; }
+    .cell { display: flex; flex-direction: column; gap: 6px; }
+    label { font-size: 0.72rem; color: var(--muted); }
+    input[type="number"] {
+      width: 100%; padding: 12px 10px; border-radius: 10px; border: 1px solid var(--border); background: var(--input); color: var(--text);
+    }
+    input[type="number"]:focus { border-color: var(--accent-2); box-shadow: 0 0 0 4px color-mix(in oklab, var(--accent-2) 25%, transparent); }
+    .readonly { background: color-mix(in oklab, var(--input) 90%, black); border-color: color-mix(in oklab, var(--border) 90%, black); }
+    .totals { margin-top: 14px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+    .pill { background: color-mix(in oklab, var(--bg) 45%, transparent); border: 1px solid var(--border); padding: 12px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; }
+    .pill b { font-size: 1.05rem; }
+    .hr { height: 1px; background: var(--border); margin: 12px 0; border-radius: 1px; }
+    .note { color: var(--muted); font-size: 0.86rem; margin-top: 8px; }
+    @media (max-width: 680px) {
+      .row {
+        grid-template-columns: 56px 1fr 1fr;
+        grid-auto-rows: auto; gap: 8px;
+      }
+      .cell[data-full="true"] { grid-column: 1 / -1; }
+      .row .cell.cbm { grid-column: 1 / -1; }
+      .row .cell.del { grid-column: 1 / -1; justify-self: end; }
+      .totals { grid-template-columns: 1fr; }
+    }
+  </style>
+
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#22c55e">
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <div class="topbar">
+        <h1>📦 CBM Calculator</h1>
+        <div class="byline">Designed and Developed by <b>Dr. Alankar Kadu (Sonari)</b></div>
+      </div>
+      <div class="sub">
+        Dimensions input unit: <span id="unitLabel">cm</span>. CBM per row is calculated automatically.
+      </div>
+
+      <div id="rows" style="margin-top:8px;"></div>
+
+      <!-- Controls below rows -->
+      <div class="controls">
+        <label for="unitSelect" style="color:var(--muted);font-size:.9rem;">Unit</label>
+        <select id="unitSelect" aria-label="Unit">
+          <option value="cm">cm</option>
+          <option value="in">inch</option>
+        </select>
+
+        <label for="themeSelect" style="color:var(--muted);font-size:.9rem;">Theme</label>
+        <select id="themeSelect" aria-label="Theme">
+          <option value="dark">Dark</option>
+          <option value="light">Light</option>
+          <option value="ocean">Ocean</option>
+          <option value="forest">Forest</option>
+          <option value="amoled">AMOLED</option>
+        </select>
+
+        <button class="btn primary" id="addRowBtn">+ Add Next Serial</button>
+        <button class="btn ghost" id="exportBtn">Export CSV</button>
+        <button class="btn primary" id="waBtn">🟢 WhatsApp Share</button>
+
+<button class="btn primary" id="aiBtn">
+📷 AI Import
+</button>
+
+<input
+  type="file"
+  id="aiFile"
+  accept="image/*"
+  capture="environment"
+  hidden
+>
+
+<button class="btn danger" id="clearBtn">Clear All</button>
+      </div>
+
+      <div class="hr"></div>
+
+      <div class="totals">
+        <div class="pill"><span>Total Serials</span> <b id="totalSerials">0</b></div>
+        <div class="pill"><span>Total PKGS</span> <b id="totalPkgs">0</b></div>
+        <div class="pill"><span>Total CBM</span> <b id="totalCbm">0.0000000</b></div>
+      </div>
+
+      <div class="note">
+        Live totals update automatically. Data is auto-saved on your device.
+      </div>
+    </div>
+  </div>
+
+  <template id="rowTemplate">
+    <div class="row" data-row>
+      <div class="cell serial">
+        <label>Sr</label>
+        <input type="number" inputmode="numeric" class="readonly" data-serial readonly/>
+      </div>
+      <div class="cell len">
+        <label>Length (<span class="unitTag">cm</span>)</label>
+        <input type="number" inputmode="decimal" step="0.01" min="0" data-l />
+      </div>
+      <div class="cell wid">
+        <label>Width (<span class="unitTag">cm</span>)</label>
+        <input type="number" inputmode="decimal" step="0.01" min="0" data-w />
+      </div>
+      <div class="cell ht">
+        <label>Height (<span class="unitTag">cm</span>)</label>
+        <input type="number" inputmode="decimal" step="0.01" min="0" data-h />
+      </div>
+      <div class="cell pkgs">
+        <label>PKGS</label>
+        <input type="number" inputmode="numeric" step="1" min="0" data-q />
+      </div>
+      <div class="cell cbm" data-full="true">
+        <label>CBM (auto)</label>
+        <input type="number" class="readonly" data-cbm readonly />
+      </div>
+      <div class="cell del">
+        <button class="btn danger" data-del>&times; Remove</button>
+      </div>
+    </div>
+  </template>
+
+  <script>
+    const STORAGE_KEY = "cbm_calc_v6";
+    const rowsEl = document.getElementById('rows');
+    const tpl = document.getElementById('rowTemplate');
+    const addRowBtn = document.getElementById('addRowBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const exportBtn = document.getElementById('exportBtn');
+    const waBtn = document.getElementById('waBtn');
+    const aiBtn = document.getElementById('aiBtn');
+    const aiFile = document.getElementById('aiFile');
+    const totalPkgsEl = document.getElementById('totalPkgs');
+    const totalCbmEl = document.getElementById('totalCbm');
+    const totalSerialsEl = document.getElementById('totalSerials');
+    const unitSelect = document.getElementById('unitSelect');
+    const unitLabel = document.getElementById('unitLabel');
+    const themeSelect = document.getElementById('themeSelect');
+
+    function formatCbm(x) { return isFinite(x) ? Number(x).toFixed(7) : '0.0000000'; }
+    function unitFactorToM3(unit) { if (unit==='cm') return 1/1_000_000; const inchToMeter=0.0254; return Math.pow(inchToMeter,3); }
+    function nextSerial() { const last = rowsEl.querySelector('[data-row]:last-of-type [data-serial]'); return last ? (parseInt(last.value,10)+1) : 1; }
+    function renumber() {
+      [...rowsEl.querySelectorAll('[data-row]')].forEach((row,i)=>row.querySelector('[data-serial]').value=i+1);
+      totalSerialsEl.textContent = rowsEl.querySelectorAll('[data-row]').length;
+    }
+    function syncUnitTags(){ document.querySelectorAll('.unitTag').forEach(el=>el.textContent=unitSelect.value==='in'?'inch':'cm'); unitLabel.textContent = unitSelect.value==='in'?'inch':'cm'; }
+    function computeRowCbm(row){
+      const l=parseFloat(row.querySelector('[data-l]').value)||0;
+      const w=parseFloat(row.querySelector('[data-w]').value)||0;
+      const h=parseFloat(row.querySelector('[data-h]').value)||0;
+      const q=parseFloat(row.querySelector('[data-q]').value)||0;
+      const cbm=(l*w*h*q)*unitFactorToM3(unitSelect.value);
+      row.querySelector('[data-cbm]').value = formatCbm(cbm);
+      return cbm;
+    }
+    function attachRowEvents(row){
+      ['[data-l]','[data-w]','[data-h]','[data-q]'].forEach(sel=>{
+        row.querySelector(sel).addEventListener('input',()=>{ computeRowCbm(row); updateTotals(); saveState(); });
+      });
+      row.querySelector('[data-del]').addEventListener('click',()=>{ row.remove(); renumber(); updateTotals(); saveState(); });
+    }
+    function addRow(prefill={}){
+      const node = tpl.content.firstElementChild.cloneNode(true);
+      rowsEl.appendChild(node);
+      node.querySelector('[data-serial]').value = nextSerial();
+      if (prefill.l!=null) node.querySelector('[data-l]').value=prefill.l;
+      if (prefill.w!=null) node.querySelector('[data-w]').value=prefill.w;
+      if (prefill.h!=null) node.querySelector('[data-h]').value=prefill.h;
+      if (prefill.q!=null) node.querySelector('[data-q]').value=prefill.q;
+      attachRowEvents(node);
+      computeRowCbm(node);
+      renumber(); updateTotals();
+      return node;
+    }
+    function updateTotals(){
+      let pkgs=0, cbmTotal=0;
+      rowsEl.querySelectorAll('[data-row]').forEach(row=>{
+        pkgs += (parseFloat(row.querySelector('[data-q]').value)||0);
+        cbmTotal += (parseFloat(row.querySelector('[data-cbm]').value)||0);
+      });
+      totalPkgsEl.textContent = pkgs;
+      totalCbmEl.textContent = formatCbm(cbmTotal);
+      totalSerialsEl.textContent = rowsEl.querySelectorAll('[data-row]').length;
+    }
+    function saveState(){
+      const data = {
+        unit: unitSelect.value,
+        theme: document.documentElement.getAttribute('data-theme') || 'dark',
+        rows: [...rowsEl.querySelectorAll('[data-row]')].map(row => ({
+          l: row.querySelector('[data-l]').value || "",
+          w: row.querySelector('[data-w]').value || "",
+          h: row.querySelector('[data-h]').value || "",
+          q: row.querySelector('[data-q]').value || ""
+        }))
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    }
+    function loadState(){
+      const raw=localStorage.getItem(STORAGE_KEY); if(!raw) return false;
+      try{
+        const data=JSON.parse(raw);
+        if (data.unit) unitSelect.value=data.unit;
+        if (data.theme) { document.documentElement.setAttribute('data-theme', data.theme); themeSelect.value=data.theme; }
+        syncUnitTags();
+        rowsEl.innerHTML='';
+        if (Array.isArray(data.rows) && data.rows.length) data.rows.forEach(r=>addRow(r)); else addRow();
+        renumber();
+        rowsEl.querySelectorAll('[data-row]').forEach(row=>computeRowCbm(row));
+        updateTotals();
+        return true;
+      }catch(e){ console.error(e); return false; }
+    }
+    function exportCSV(){
+      const header=["SR NO",`LENGTH(${unitSelect.value==='in'?'inch':'cm'})`,`WIDTH(${unitSelect.value==='in'?'inch':'cm'})`,`HEIGHT(${unitSelect.value==='in'?'inch':'cm'})`,"PKGS","CBM"];
+      const rows=[...rowsEl.querySelectorAll('[data-row]')].map((row,i)=>[
+        i+1,
+        row.querySelector('[data-l]').value||"",
+        row.querySelector('[data-w]').value||"",
+        row.querySelector('[data-h]').value||"",
+        row.querySelector('[data-q]').value||"",
+        row.querySelector('[data-cbm]').value||"0.0000000"
+      ]);
+      const totals=["TOTALS","","","",totalPkgsEl.textContent,totalCbmEl.textContent];
+      const csv=[header,...rows,totals].map(r=>r.map(x=>String(x).replace(/"/g,'""')).map(x=>`"${x}"`).join(",")).join("\n");
+      const blob=new Blob([csv],{type:"text/csv;charset=utf-8;"});
+      const url=URL.createObjectURL(blob); const a=document.createElement('a');
+      a.href=url; a.download=`cbm_export_${new Date().toISOString().slice(0,19).replace(/[:T]/g,'-')}.csv`;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+    }
+
+
+    function shareWhatsApp(){
+      let msg = "📦 CBM REPORT\n\n";
+      rowsEl.querySelectorAll('[data-row]').forEach((row,i)=>{
+        const l=row.querySelector('[data-l]').value||0;
+        const w=row.querySelector('[data-w]').value||0;
+        const h=row.querySelector('[data-h]').value||0;
+        const q=row.querySelector('[data-q]').value||0;
+        if(l>0 && w>0 && h>0 && q>0){
+
+  const cbm =
+    (parseFloat(l) *
+     parseFloat(w) *
+     parseFloat(h) *
+     parseFloat(q)) / 1000000;
+
+  msg += `${i+1}) ${l} x ${w} x ${h} = ${q} PKGS | CBM: ${cbm.toFixed(7)}\n`;
+}
+      });
+
+      msg += `\nTotal PKGS: ${totalPkgsEl.textContent}`;
+      msg += `\nTotal CBM: ${totalCbmEl.textContent}`;
+
+      window.open(
+        'https://wa.me/?text=' + encodeURIComponent(msg),
+        '_blank'
+      );
+    }
+
+    async function aiImportImage(file){
+
+  aiBtn.disabled = true;
+  aiBtn.textContent = "🤖 Reading...";
+
+  try {
+
+    const base64 = await new Promise((resolve)=>{
+
+      const reader = new FileReader();
+
+      reader.onload = ()=>resolve(reader.result);
+
+      reader.readAsDataURL(file);
+
+    });
+
+    const response = await fetch(
+      "https://cbm-ai-import.alankaar-kadu.workers.dev/",
+      {
+        method:"POST",
+        headers:{
+          "Content-Type":"application/json"
+        },
+        body: JSON.stringify({
+          image: base64
+        })
+      }
+    );
+
+    const text = await response.text();
+
+    let clean = text.trim();
+
+clean = clean
+  .replace(/```json/g,'')
+  .replace(/```/g,'')
+  .trim();
+
+const rows = JSON.parse(clean);
+
+    rows.forEach(r=>{
+
+      addRow({
+        l:r.l,
+        w:r.w,
+        h:r.h,
+        q:r.q
+      });
+
+    });
+
+    saveState();
+
+    alert(
+      rows.length +
+      " rows imported successfully."
+    );
+
+  } catch(err){
+
+    alert(
+      "AI Import Failed\n\n" +
+      err.message
+    );
+
+    console.error(err);
+
+  }
+
+  aiBtn.disabled = false;
+  aiBtn.textContent = "📷 AI Import";
+}
+
+    // Actions
+    waBtn.addEventListener('click', shareWhatsApp);
+    aiBtn.addEventListener(
+  'click',
+  ()=>aiFile.click()
+);
+
+aiFile.addEventListener(
+  'change',
+  (e)=>{
+
+    const file =
+      e.target.files[0];
+
+    if(!file) return;
+
+    aiImportImage(file);
+
+  }
+);
+    addRowBtn.addEventListener('click', ()=>{ addRow(); saveState(); });
+    clearBtn.addEventListener('click', ()=>{ rowsEl.innerHTML=''; addRow(); updateTotals(); if(navigator.vibrate) navigator.vibrate([20,20]); saveState(); });
+    exportBtn.addEventListener('click', exportCSV);
+    unitSelect.addEventListener('change', ()=>{ syncUnitTags(); rowsEl.querySelectorAll('[data-row]').forEach(row=>computeRowCbm(row)); updateTotals(); saveState(); });
+    themeSelect.addEventListener('change', ()=>{ document.documentElement.setAttribute('data-theme', themeSelect.value); saveState(); });
+
+    // Init
+    (function init(){
+      syncUnitTags();
+      if (!loadState()) { addRow(); updateTotals(); } else { renumber(); updateTotals(); }
+    })();
+  </script>
+
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./service-worker.js");
+  });
+}
+</script>
+
+</body>
+</html>
