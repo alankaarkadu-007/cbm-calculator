@@ -125,6 +125,7 @@
         <label for="unitSelect" style="color:var(--muted);font-size:.9rem;">Unit</label>
         <select id="unitSelect" aria-label="Unit">
           <option value="cm">cm</option>
+           <option value="mm">mm</option>
           <option value="in">inch</option>
         </select>
 
@@ -220,13 +221,42 @@
     const themeSelect = document.getElementById('themeSelect');
 
     function formatCbm(x) { return isFinite(x) ? Number(x).toFixed(7) : '0.0000000'; }
-    function unitFactorToM3(unit) { if (unit==='cm') return 1/1_000_000; const inchToMeter=0.0254; return Math.pow(inchToMeter,3); }
+    function unitFactorToM3(unit) {
+
+  if (unit === 'cm')
+    return 1 / 1000000;
+
+  if (unit === 'mm')
+    return 1 / 1000000000;
+
+  if (unit === 'in') {
+    const inchToMeter = 0.0254;
+    return Math.pow(inchToMeter, 3);
+  }
+
+  return 1 / 1000000;
+}
     function nextSerial() { const last = rowsEl.querySelector('[data-row]:last-of-type [data-serial]'); return last ? (parseInt(last.value,10)+1) : 1; }
     function renumber() {
       [...rowsEl.querySelectorAll('[data-row]')].forEach((row,i)=>row.querySelector('[data-serial]').value=i+1);
       totalSerialsEl.textContent = rowsEl.querySelectorAll('[data-row]').length;
     }
-    function syncUnitTags(){ document.querySelectorAll('.unitTag').forEach(el=>el.textContent=unitSelect.value==='in'?'inch':'cm'); unitLabel.textContent = unitSelect.value==='in'?'inch':'cm'; }
+    function syncUnitTags(){
+
+  let unitText = "cm";
+
+  if(unitSelect.value === "mm")
+    unitText = "mm";
+
+  if(unitSelect.value === "in")
+    unitText = "inch";
+
+  document
+    .querySelectorAll('.unitTag')
+    .forEach(el => el.textContent = unitText);
+
+  unitLabel.textContent = unitText;
+}
     function computeRowCbm(row){
       const l=parseFloat(row.querySelector('[data-l]').value)||0;
       const w=parseFloat(row.querySelector('[data-w]').value)||0;
@@ -294,7 +324,21 @@
       }catch(e){ console.error(e); return false; }
     }
     function exportCSV(){
-      const header=["SR NO",`LENGTH(${unitSelect.value==='in'?'inch':'cm'})`,`WIDTH(${unitSelect.value==='in'?'inch':'cm'})`,`HEIGHT(${unitSelect.value==='in'?'inch':'cm'})`,"PKGS","CBM"];
+      const unitName =
+  unitSelect.value === "in"
+    ? "inch"
+    : unitSelect.value === "mm"
+      ? "mm"
+      : "cm";
+
+const header=[
+ "SR NO",
+ `LENGTH(${unitName})`,
+ `WIDTH(${unitName})`,
+ `HEIGHT(${unitName})`,
+ "PKGS",
+ "CBM"
+];
       const rows=[...rowsEl.querySelectorAll('[data-row]')].map((row,i)=>[
         i+1,
         row.querySelector('[data-l]').value||"",
